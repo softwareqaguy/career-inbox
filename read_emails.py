@@ -1,6 +1,6 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, date 
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,6 +40,11 @@ response.raise_for_status()
 
 emails = response.json().get("data", [])
 job_emails = [email for email in emails if is_job_related(email)]
+review_folder = "job_email_reviews"
+os.makedirs(review_folder, exist_ok=True)
+
+today = date.today().isoformat()
+review_file = os.path.join(review_folder, f"job_email_review_{today}.md")
 
 print("\nCareer Inbox - Job Related Emails")
 print("=" * 70)
@@ -66,3 +71,33 @@ else:
 
 
         print("-" * 70)
+
+with open(review_file, "w", encoding="utf-8") as file:
+    file.write(f"# Job Email Review - {today}\n\n")
+
+    if not job_emails:
+        file.write("No job-related emails found.\n")
+    else:
+        file.write(f"Found {len(job_emails)} job-related email(s).\n\n")
+
+        for index, email in enumerate(job_emails, start=1):
+            subject = email.get("subject", "No subject")
+            sender = email.get("from", [])
+            raw_date = email.get("date")
+            snippet = email.get("snippet", "")
+
+            if raw_date:
+                formatted_date = datetime.fromtimestamp(raw_date).strftime("%Y-%m-%d %I:%M:%S %p")
+            else:
+                formatted_date = "No date"
+
+            file.write(f"## {index}. {subject}\n\n")
+            file.write(f"**From:** {sender}\n\n")
+            file.write(f"**Date:** {formatted_date}\n\n")
+
+            if snippet:
+                file.write(f"**Snippet:** {snippet}\n\n")
+
+            file.write("---\n\n")
+
+print(f"\nJob email review saved to: {review_file}")
