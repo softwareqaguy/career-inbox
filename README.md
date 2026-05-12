@@ -4,18 +4,18 @@ A Python workflow that connects to a Yahoo mailbox through the Nylas API, reads 
 
 ## Current Features
 
-- Connects to the Nylas API
-- Reads recent Yahoo inbox messages
-- Formats email dates into a readable format
-- Filters job-related emails using keywords
-- Displays sender, subject, date, and snippet
+- Classifies filtered emails into practical review categories:
+  - Direct recruiter outreach
+  - Job alert / automated posting
+  - Interview or follow-up
+  - Possible marketing/noise
+  - General job-related
 
 ## Planned Features
 
-- Daily job-search email summary
-- Priority classification
-- AI-generated summary and suggested next action
-- Optional draft response support for manual review
+- AI-assisted summary for each job-related email
+- Suggested next action for manual review
+- Optional draft response support without automatic sending
 
 ## Tech Stack
 
