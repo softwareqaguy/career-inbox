@@ -15,7 +15,39 @@ if not NYLAS_API_KEY:
 if not NYLAS_GRANT_ID:
     raise ValueError("Missing NYLAS_GRANT_ID in .env")
 
-JOB_KEYWORDS = ["recruiter", "hiring", "interview", "w2", "contract", "quality assurance", "qa analyst", "qa lead", "test analyst", "business analyst", "technical analyst", "application support", "production support", "databricks"]
+JOB_KEYWORDS = [
+    "recruiter",
+    "hiring",
+    "interview",
+    "job",
+    "position",
+    "opportunity",
+    "contract",
+    "w2",
+    "remote",
+    "hybrid",
+    "onsite",
+    "qa",
+    "quality assurance",
+    "qa analyst",
+    "qa engineer",
+    "test analyst",
+    "performance test",
+    "automation",
+    "software tester",
+    "business analyst",
+    "technical analyst",
+    "application support",
+    "production support",
+    "databricks",
+    "sql",
+    "python",
+    "resume",
+    "background",
+    "experience",
+    "available",
+    "availability",
+]
 
 def is_job_related(email):
     subject = email.get("subject", "") or ""
@@ -23,6 +55,68 @@ def is_job_related(email):
     searchable_text = f"{subject} {snippet}".lower()
 
     return any(keyword in searchable_text for keyword in JOB_KEYWORDS)
+
+def classify_email(email):
+    subject = email.get("subject", "") or ""
+    snippet = email.get("snippet", "") or ""
+    sender = str(email.get("from", "")) or ""
+
+    text = f"{subject} {snippet} {sender}".lower()
+
+    if any(keyword in text for keyword in [
+        "interview",
+        "schedule a call",
+        "phone screen",
+        "video interview",
+        "next steps",
+        "availability",
+        "available for a call",
+        "follow up",
+        "following up",
+    ]):
+        return "Interview or follow-up"
+
+    if any(keyword in text for keyword in [
+        "recruiter",
+        "talent acquisition",
+        "staffing",
+        "w2 contract",
+        "contract role",
+        "contract position",
+        "hiring for",
+        "i came across your profile",
+        "your background",
+        "your experience",
+    ]):
+        return "Direct recruiter outreach"
+
+    if any(keyword in text for keyword in [
+        "job alert",
+        "new jobs",
+        "recommended jobs",
+        "jobs you may be interested in",
+        "linkedin job",
+        "indeed",
+        "ziprecruiter",
+        "glassdoor",
+        "dice",
+    ]):
+        return "Job alert / automated posting"
+
+    if any(keyword in text for keyword in [
+        "insurance",
+        "save",
+        "discount",
+        "unsubscribe",
+        "promotion",
+        "limited time",
+        "offer",
+        "credit",
+        "loan",
+    ]):
+        return "Possible marketing/noise"
+
+    return "General job-related"
 
 headers = {
     "Authorization": f"Bearer {NYLAS_API_KEY}",
@@ -32,7 +126,7 @@ headers = {
 url = f"{NYLAS_API_URI}/v3/grants/{NYLAS_GRANT_ID}/messages"
 
 params = {
-    "limit": 10
+    "limit": 50
 }
 
 response = requests.get(url, headers=headers, params=params)
@@ -40,6 +134,8 @@ response.raise_for_status()
 
 emails = response.json().get("data", [])
 job_emails = [email for email in emails if is_job_related(email)]
+print(f"Total emails checked: {len(emails)}")
+print(f"Job-related emails found: {len(job_emails)}")
 review_folder = "job_email_reviews"
 os.makedirs(review_folder, exist_ok=True)
 
@@ -57,6 +153,7 @@ else:
         sender = email.get("from", [])
         raw_date = email.get("date")
         snippet = email.get("snippet", "")
+        category = classify_email(email)
         if raw_date:
             formatted_date = datetime.fromtimestamp(raw_date).strftime("%Y-%m-%d %I:%M:%S %p")
         else:            
@@ -65,6 +162,7 @@ else:
         print(f"\n{index}. {subject}")
         print(f"From: {sender}")
         print(f"Date: {formatted_date}")
+        print(f"Category: {category}")
 
         if snippet:
             print(f"Snippet: {snippet}")
@@ -85,6 +183,7 @@ with open(review_file, "w", encoding="utf-8") as file:
             sender = email.get("from", [])
             raw_date = email.get("date")
             snippet = email.get("snippet", "")
+            category = classify_email(email)
 
             if raw_date:
                 formatted_date = datetime.fromtimestamp(raw_date).strftime("%Y-%m-%d %I:%M:%S %p")
@@ -94,6 +193,7 @@ with open(review_file, "w", encoding="utf-8") as file:
             file.write(f"## {index}. {subject}\n\n")
             file.write(f"**From:** {sender}\n\n")
             file.write(f"**Date:** {formatted_date}\n\n")
+            file.write(f"**Category:** {category}\n\n")
 
             if snippet:
                 file.write(f"**Snippet:** {snippet}\n\n")
