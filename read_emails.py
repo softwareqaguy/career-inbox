@@ -197,6 +197,13 @@ with open(review_file, "w", encoding="utf-8") as file:
 
             if snippet:
                 file.write(f"**Snippet:** {snippet}\n\n")
+            
+            file.write("**Review Notes:**\n\n")
+            file.write("- Role/company:\n")
+            file.write("- Location/remote:\n")
+            file.write("- Employment type:\n")
+            file.write("- Pay/rate:\n")
+            file.write("- Action needed:\n\n")
 
             file.write("---\n\n")
 
