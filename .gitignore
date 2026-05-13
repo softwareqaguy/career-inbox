@@ -3,3 +3,4 @@
 __pycache__/
 *.log
 job_email_reviews/
+run_career_inbox.bat
